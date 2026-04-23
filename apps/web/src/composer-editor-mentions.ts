@@ -3,6 +3,11 @@ import {
   type TerminalContextDraft,
 } from "./lib/terminalContext";
 
+export type MentionLineRange = {
+  readonly start: number;
+  readonly end: number;
+};
+
 export type ComposerPromptSegment =
   | {
       type: "text";
@@ -11,6 +16,7 @@ export type ComposerPromptSegment =
   | {
       type: "mention";
       path: string;
+      lineRange?: MentionLineRange | undefined;
     }
   | {
       type: "skill";
@@ -21,7 +27,7 @@ export type ComposerPromptSegment =
       context: TerminalContextDraft | null;
     };
 
-const MENTION_TOKEN_REGEX = /(^|\s)@([^\s@]+)(?=\s)/g;
+const MENTION_TOKEN_REGEX = /(^|\s)@([^\s@]+?)(?::L(\d+)-L(\d+))?(?=\s)/g;
 const SKILL_TOKEN_REGEX = /(^|\s)\$([a-zA-Z][a-zA-Z0-9:_-]*)(?=\s)/g;
 
 function rangeIncludesIndex(start: number, end: number, index: number): boolean {
@@ -42,6 +48,7 @@ type InlineTokenMatch =
   | {
       type: "mention";
       value: string;
+      lineRange?: MentionLineRange | undefined;
       start: number;
       end: number;
     }
@@ -59,11 +66,17 @@ function collectInlineTokenMatches(text: string): InlineTokenMatch[] {
     const fullMatch = match[0];
     const prefix = match[1] ?? "";
     const path = match[2] ?? "";
+    const lineStart = match[3];
+    const lineEnd = match[4];
     const matchIndex = match.index ?? 0;
     const start = matchIndex + prefix.length;
     const end = start + fullMatch.length - prefix.length;
     if (path.length > 0) {
-      matches.push({ type: "mention", value: path, start, end });
+      const lineRange =
+        lineStart !== undefined && lineEnd !== undefined
+          ? { start: Number.parseInt(lineStart, 10), end: Number.parseInt(lineEnd, 10) }
+          : undefined;
+      matches.push({ type: "mention", value: path, lineRange, start, end });
     }
   }
 
@@ -178,7 +191,11 @@ function splitPromptTextIntoComposerSegments(text: string): ComposerPromptSegmen
     }
 
     if (match.type === "mention") {
-      segments.push({ type: "mention", path: match.value });
+      segments.push({
+        type: "mention",
+        path: match.value,
+        ...(match.lineRange ? { lineRange: match.lineRange } : {}),
+      });
     } else {
       segments.push({ type: "skill", name: match.value });
     }
