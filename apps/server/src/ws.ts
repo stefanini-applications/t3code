@@ -18,6 +18,10 @@ import {
   ProjectWriteFileError,
   OrchestrationReplayEventsError,
   FilesystemBrowseError,
+  FilesystemReadFileError,
+  FilesystemListDirectoryError,
+  FilesystemMutationError,
+  GitFileStatusError,
   ThreadId,
   type TerminalEvent,
   WS_METHODS,
@@ -48,6 +52,7 @@ import { ServerRuntimeStartup } from "./serverRuntimeStartup.ts";
 import { ServerSettingsService } from "./serverSettings.ts";
 import { TerminalManager } from "./terminal/Services/Manager.ts";
 import { WorkspaceEntries } from "./workspace/Services/WorkspaceEntries.ts";
+import { WorkspaceFileExplorer } from "./workspace/Services/WorkspaceFileExplorer.ts";
 import { WorkspaceFileSystem } from "./workspace/Services/WorkspaceFileSystem.ts";
 import { WorkspacePathOutsideRootError } from "./workspace/Services/WorkspacePaths.ts";
 import { ProjectSetupScriptRunner } from "./project/Services/ProjectSetupScriptRunner.ts";
@@ -147,6 +152,7 @@ const makeWsRpcLayer = (currentSessionId: AuthSessionId) =>
       const startup = yield* ServerRuntimeStartup;
       const workspaceEntries = yield* WorkspaceEntries;
       const workspaceFileSystem = yield* WorkspaceFileSystem;
+      const workspaceFileExplorer = yield* WorkspaceFileExplorer;
       const projectSetupScriptRunner = yield* ProjectSetupScriptRunner;
       const repositoryIdentityResolver = yield* RepositoryIdentityResolver;
       const serverEnvironment = yield* ServerEnvironment;
@@ -819,6 +825,85 @@ const makeWsRpcLayer = (currentSessionId: AuthSessionId) =>
               ),
             ),
             { "rpc.aggregate": "workspace" },
+          ),
+        [WS_METHODS.filesystemReadFile]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.filesystemReadFile,
+            workspaceFileExplorer.readFile(input).pipe(
+              Effect.mapError((cause) => {
+                const message = Schema.is(WorkspacePathOutsideRootError)(cause)
+                  ? "Filesystem path must stay within the project root."
+                  : "Failed to read file";
+                return new FilesystemReadFileError({ message, cause });
+              }),
+            ),
+            { "rpc.aggregate": "workspace" },
+          ),
+        [WS_METHODS.filesystemListDirectory]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.filesystemListDirectory,
+            workspaceFileExplorer.listDirectory(input).pipe(
+              Effect.mapError((cause) => {
+                const message = Schema.is(WorkspacePathOutsideRootError)(cause)
+                  ? "Filesystem path must stay within the project root."
+                  : "Failed to list directory";
+                return new FilesystemListDirectoryError({ message, cause });
+              }),
+            ),
+            { "rpc.aggregate": "workspace" },
+          ),
+        [WS_METHODS.filesystemRename]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.filesystemRename,
+            workspaceFileExplorer.rename(input).pipe(
+              Effect.mapError((cause) => {
+                const message = Schema.is(WorkspacePathOutsideRootError)(cause)
+                  ? "Filesystem path must stay within the project root."
+                  : "Failed to rename";
+                return new FilesystemMutationError({ message, cause });
+              }),
+            ),
+            { "rpc.aggregate": "workspace" },
+          ),
+        [WS_METHODS.filesystemDelete]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.filesystemDelete,
+            workspaceFileExplorer.delete(input).pipe(
+              Effect.mapError((cause) => {
+                const message = Schema.is(WorkspacePathOutsideRootError)(cause)
+                  ? "Filesystem path must stay within the project root."
+                  : "Failed to delete";
+                return new FilesystemMutationError({ message, cause });
+              }),
+            ),
+            { "rpc.aggregate": "workspace" },
+          ),
+        [WS_METHODS.filesystemCreateDirectory]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.filesystemCreateDirectory,
+            workspaceFileExplorer.createDirectory(input).pipe(
+              Effect.mapError((cause) => {
+                const message = Schema.is(WorkspacePathOutsideRootError)(cause)
+                  ? "Filesystem path must stay within the project root."
+                  : "Failed to create directory";
+                return new FilesystemMutationError({ message, cause });
+              }),
+            ),
+            { "rpc.aggregate": "workspace" },
+          ),
+        [WS_METHODS.gitFileStatus]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.gitFileStatus,
+            workspaceFileExplorer.gitFileStatus(input.cwd).pipe(
+              Effect.mapError(
+                (cause) =>
+                  new GitFileStatusError({
+                    message: "Failed to get git file status",
+                    cause,
+                  }),
+              ),
+            ),
+            { "rpc.aggregate": "git" },
           ),
         [WS_METHODS.subscribeGitStatus]: (input) =>
           observeRpcStream(
