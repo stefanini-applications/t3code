@@ -1,0 +1,456 @@
+<h2>Right Panel Architecture: Tabbed Layout</h2>
+<p class="subtitle">How the file tree + editor integrates with the existing diff panel</p>
+
+<div class="section">
+  <h3>Approach A: Unified Tabbed Right Panel (Recommended)</h3>
+  <p>
+    Single right panel with tab bar. Diff and File Explorer are tabs. Each tab preserves state when
+    switching. Same responsive behavior (inline sidebar on wide, sheet on narrow).
+  </p>
+</div>
+
+<div class="split">
+  <div class="mockup" data-choice="a" onclick="toggleSelect(this)">
+    <div class="mockup-header">File Explorer Tab Active</div>
+    <div
+      class="mockup-body"
+      style="
+        font-family: monospace;
+        font-size: 12px;
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 0;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+      "
+    >
+      <!-- Tab bar -->
+      <div
+        style="
+          display: flex;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(0, 0, 0, 0.15);
+        "
+      >
+        <div
+          style="
+            padding: 8px 16px;
+            font-size: 12px;
+            color: #89b4fa;
+            border-bottom: 2px solid #89b4fa;
+            background: rgba(137, 180, 250, 0.05);
+          "
+        >
+          <span style="margin-right: 4px">📁</span> Files
+        </div>
+        <div style="padding: 8px 16px; font-size: 12px; color: #6c7086">
+          <span style="margin-right: 4px">±</span> Diff
+        </div>
+      </div>
+
+      <!-- Content area: tree + editor split -->
+      <div style="flex: 1; display: flex; min-height: 0">
+        <!-- File tree -->
+        <div
+          style="
+            width: 220px;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            overflow-y: auto;
+            padding: 6px 0;
+          "
+        >
+          <!-- Toolbar -->
+          <div style="display: flex; align-items: center; padding: 4px 10px 8px; gap: 6px">
+            <input
+              style="
+                flex: 1;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 4px;
+                padding: 3px 8px;
+                font-size: 11px;
+                color: #a6adc8;
+              "
+              placeholder="Search files..."
+            />
+          </div>
+
+          <!-- Tree items -->
+          <div style="padding: 2px 0">
+            <div
+              style="
+                padding: 3px 10px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: #cdd6f4;
+              "
+            >
+              <span style="font-size: 10px">▼</span>
+              <span style="color: #89b4fa">📂</span>
+              <span style="font-size: 12px; font-weight: 500">apps</span>
+            </div>
+            <div style="padding: 3px 10px 3px 28px; display: flex; align-items: center; gap: 6px">
+              <span style="font-size: 10px">▼</span>
+              <span style="color: #89b4fa">📂</span>
+              <span style="font-size: 12px">server</span>
+            </div>
+            <div style="padding: 3px 10px 3px 46px; display: flex; align-items: center; gap: 6px">
+              <span style="font-size: 10px">▶</span>
+              <span style="color: #89b4fa">📂</span>
+              <span style="font-size: 12px">src</span>
+            </div>
+            <div
+              style="
+                padding: 3px 10px 3px 46px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: #a6adc8;
+              "
+            >
+              <span style="opacity: 0">&nbsp;&nbsp;</span>
+              <span>📄</span>
+              <span style="font-size: 12px">package.json</span>
+            </div>
+            <div style="padding: 3px 10px 3px 28px; display: flex; align-items: center; gap: 6px">
+              <span style="font-size: 10px">▼</span>
+              <span style="color: #89b4fa">📂</span>
+              <span style="font-size: 12px">web</span>
+            </div>
+            <div style="padding: 3px 10px 3px 46px; display: flex; align-items: center; gap: 6px">
+              <span style="font-size: 10px">▶</span>
+              <span style="color: #89b4fa">📂</span>
+              <span style="font-size: 12px">src</span>
+            </div>
+            <div
+              style="
+                padding: 3px 10px 3px 46px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                background: rgba(137, 180, 250, 0.08);
+                border-radius: 4px;
+              "
+            >
+              <span style="opacity: 0">&nbsp;&nbsp;</span>
+              <span>⚙️</span>
+              <span style="font-size: 12px; color: #89b4fa">tsconfig.json</span>
+            </div>
+            <div style="padding: 3px 10px; display: flex; align-items: center; gap: 6px">
+              <span style="font-size: 10px">▶</span>
+              <span style="color: #89b4fa">📂</span>
+              <span style="font-size: 12px; font-weight: 500">packages</span>
+            </div>
+            <div
+              style="
+                padding: 3px 10px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: #a6adc8;
+              "
+            >
+              <span style="opacity: 0">&nbsp;&nbsp;</span>
+              <span>📄</span>
+              <span style="font-size: 12px">package.json</span>
+            </div>
+            <div
+              style="
+                padding: 3px 10px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: #a6adc8;
+              "
+            >
+              <span style="opacity: 0">&nbsp;&nbsp;</span>
+              <span>📝</span>
+              <span style="font-size: 12px">README.md</span>
+              <span style="margin-left: auto; font-size: 10px; color: #f9e2af; font-weight: 600"
+                >M</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Code editor -->
+        <div style="flex: 1; display: flex; flex-direction: column; min-width: 0">
+          <!-- Editor tabs -->
+          <div
+            style="
+              display: flex;
+              border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+              background: rgba(0, 0, 0, 0.1);
+            "
+          >
+            <div
+              style="
+                padding: 6px 12px;
+                font-size: 11px;
+                color: #cdd6f4;
+                background: rgba(255, 255, 255, 0.04);
+                border-right: 1px solid rgba(255, 255, 255, 0.06);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              "
+            >
+              ⚙️ tsconfig.json
+              <span style="font-size: 9px; color: #6c7086; cursor: pointer">✕</span>
+            </div>
+            <div
+              style="
+                padding: 6px 12px;
+                font-size: 11px;
+                color: #6c7086;
+                border-right: 1px solid rgba(255, 255, 255, 0.06);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              "
+            >
+              📄 package.json
+              <span style="font-size: 9px; color: #6c7086; cursor: pointer">✕</span>
+            </div>
+          </div>
+          <!-- Breadcrumb -->
+          <div
+            style="
+              padding: 4px 12px;
+              font-size: 11px;
+              color: #6c7086;
+              border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            "
+          >
+            apps &gt; web &gt; tsconfig.json
+          </div>
+          <!-- Code -->
+          <div style="flex: 1; padding: 8px 0; overflow: auto; font-size: 12px; line-height: 1.6">
+            <div style="display: flex">
+              <span
+                style="
+                  color: #6c7086;
+                  width: 40px;
+                  text-align: right;
+                  padding-right: 12px;
+                  user-select: none;
+                "
+                >1</span
+              ><span style="color: #cba6f7">{</span>
+            </div>
+            <div style="display: flex">
+              <span
+                style="
+                  color: #6c7086;
+                  width: 40px;
+                  text-align: right;
+                  padding-right: 12px;
+                  user-select: none;
+                "
+                >2</span
+              ><span>&nbsp;&nbsp;</span><span style="color: #89b4fa">"compilerOptions"</span
+              ><span style="color: #cdd6f4">: {</span>
+            </div>
+            <div style="display: flex">
+              <span
+                style="
+                  color: #6c7086;
+                  width: 40px;
+                  text-align: right;
+                  padding-right: 12px;
+                  user-select: none;
+                "
+                >3</span
+              ><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #89b4fa">"strict"</span
+              ><span style="color: #cdd6f4">: </span><span style="color: #fab387">true</span
+              ><span style="color: #cdd6f4">,</span>
+            </div>
+            <div style="display: flex">
+              <span
+                style="
+                  color: #6c7086;
+                  width: 40px;
+                  text-align: right;
+                  padding-right: 12px;
+                  user-select: none;
+                "
+                >4</span
+              ><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #89b4fa">"target"</span
+              ><span style="color: #cdd6f4">: </span><span style="color: #a6e3a1">"ES2020"</span
+              ><span style="color: #cdd6f4">,</span>
+            </div>
+            <div style="display: flex">
+              <span
+                style="
+                  color: #6c7086;
+                  width: 40px;
+                  text-align: right;
+                  padding-right: 12px;
+                  user-select: none;
+                "
+                >5</span
+              ><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #89b4fa">"module"</span
+              ><span style="color: #cdd6f4">: </span><span style="color: #a6e3a1">"ES2020"</span>
+            </div>
+            <div style="display: flex">
+              <span
+                style="
+                  color: #6c7086;
+                  width: 40px;
+                  text-align: right;
+                  padding-right: 12px;
+                  user-select: none;
+                "
+                >6</span
+              ><span>&nbsp;&nbsp;</span><span style="color: #cba6f7">}</span>
+            </div>
+            <div style="display: flex">
+              <span
+                style="
+                  color: #6c7086;
+                  width: 40px;
+                  text-align: right;
+                  padding-right: 12px;
+                  user-select: none;
+                "
+                >7</span
+              ><span style="color: #cba6f7">}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup" data-choice="b" onclick="toggleSelect(this)">
+    <div class="mockup-header">Diff Tab Active (same panel, different tab)</div>
+    <div
+      class="mockup-body"
+      style="
+        font-family: monospace;
+        font-size: 12px;
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 0;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+      "
+    >
+      <!-- Tab bar -->
+      <div
+        style="
+          display: flex;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(0, 0, 0, 0.15);
+        "
+      >
+        <div style="padding: 8px 16px; font-size: 12px; color: #6c7086">
+          <span style="margin-right: 4px">📁</span> Files
+        </div>
+        <div
+          style="
+            padding: 8px 16px;
+            font-size: 12px;
+            color: #89b4fa;
+            border-bottom: 2px solid #89b4fa;
+            background: rgba(137, 180, 250, 0.05);
+          "
+        >
+          <span style="margin-right: 4px">±</span> Diff
+        </div>
+      </div>
+
+      <!-- Diff content (existing panel) -->
+      <div style="flex: 1; padding: 12px">
+        <div
+          style="
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            margin-bottom: 12px;
+          "
+        >
+          <div style="font-size: 11px; color: #a6adc8; margin-bottom: 4px">Turn #3 Changes</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <span
+              style="
+                padding: 3px 8px;
+                background: rgba(166, 227, 161, 0.1);
+                color: #a6e3a1;
+                border-radius: 4px;
+                font-size: 11px;
+              "
+              >src/index.ts +12 -3</span
+            >
+            <span
+              style="
+                padding: 3px 8px;
+                background: rgba(249, 226, 175, 0.1);
+                color: #f9e2af;
+                border-radius: 4px;
+                font-size: 11px;
+              "
+              >README.md +5 -2</span
+            >
+          </div>
+        </div>
+        <div style="font-size: 11px; color: #6c7086; padding: 4px 0">src/index.ts</div>
+        <div
+          style="
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 11px;
+            line-height: 1.6;
+          "
+        >
+          <div>
+            <span style="color: #6c7086">10</span>
+            <span style="color: #585b70"> const app = express();</span>
+          </div>
+          <div style="background: rgba(166, 227, 161, 0.08)">
+            <span style="color: #a6e3a1">11</span>
+            <span style="color: #a6e3a1">+ app.use(cors());</span>
+          </div>
+          <div style="background: rgba(166, 227, 161, 0.08)">
+            <span style="color: #a6e3a1">12</span>
+            <span style="color: #a6e3a1">+ app.use(helmet());</span>
+          </div>
+          <div>
+            <span style="color: #6c7086">13</span>
+            <span style="color: #585b70"> app.listen(3000);</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px">
+  <h3>Key Design Points</h3>
+  <ul>
+    <li>
+      <strong>Tab bar at panel top</strong> — switches between Files and Diff views, URL-driven
+      state
+    </li>
+    <li>
+      <strong>File tree + editor split</strong> — tree on left, CodeMirror editor on right,
+      resizable divider
+    </li>
+    <li>
+      <strong>Multiple editor tabs</strong> — open files shown as tabs with close buttons and
+      unsaved indicators
+    </li>
+    <li>
+      <strong>State preserved</strong> — switching tabs keeps scroll position, expanded folders,
+      open files
+    </li>
+    <li>
+      <strong>Same responsive behavior</strong> — inline sidebar on wide screens, sheet overlay on
+      narrow
+    </li>
+  </ul>
+</div>

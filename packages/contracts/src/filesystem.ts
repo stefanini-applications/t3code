@@ -31,13 +31,9 @@ export class FilesystemBrowseError extends Schema.TaggedErrorClass<FilesystemBro
 
 // --- File Explorer RPCs ---
 
-
-
 export const FilesystemReadFileInput = Schema.Struct({
   cwd: TrimmedNonEmptyString,
-  relativePath: TrimmedNonEmptyString.check(
-    Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH),
-  ),
+  relativePath: TrimmedNonEmptyString.check(Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH)),
 });
 export type FilesystemReadFileInput = typeof FilesystemReadFileInput.Type;
 
@@ -57,9 +53,7 @@ export class FilesystemReadFileError extends Schema.TaggedErrorClass<FilesystemR
 
 export const FilesystemListDirectoryInput = Schema.Struct({
   cwd: TrimmedNonEmptyString,
-  relativePath: TrimmedNonEmptyString.check(
-    Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH),
-  ),
+  relativePath: TrimmedNonEmptyString.check(Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH)),
 });
 export type FilesystemListDirectoryInput = typeof FilesystemListDirectoryInput.Type;
 
@@ -87,28 +81,20 @@ export class FilesystemListDirectoryError extends Schema.TaggedErrorClass<Filesy
 
 export const FilesystemRenameInput = Schema.Struct({
   cwd: TrimmedNonEmptyString,
-  oldRelativePath: TrimmedNonEmptyString.check(
-    Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH),
-  ),
-  newRelativePath: TrimmedNonEmptyString.check(
-    Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH),
-  ),
+  oldRelativePath: TrimmedNonEmptyString.check(Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH)),
+  newRelativePath: TrimmedNonEmptyString.check(Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH)),
 });
 export type FilesystemRenameInput = typeof FilesystemRenameInput.Type;
 
 export const FilesystemDeleteInput = Schema.Struct({
   cwd: TrimmedNonEmptyString,
-  relativePath: TrimmedNonEmptyString.check(
-    Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH),
-  ),
+  relativePath: TrimmedNonEmptyString.check(Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH)),
 });
 export type FilesystemDeleteInput = typeof FilesystemDeleteInput.Type;
 
 export const FilesystemCreateDirectoryInput = Schema.Struct({
   cwd: TrimmedNonEmptyString,
-  relativePath: TrimmedNonEmptyString.check(
-    Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH),
-  ),
+  relativePath: TrimmedNonEmptyString.check(Schema.isMaxLength(FILESYSTEM_PATH_MAX_LENGTH)),
 });
 export type FilesystemCreateDirectoryInput = typeof FilesystemCreateDirectoryInput.Type;
 
