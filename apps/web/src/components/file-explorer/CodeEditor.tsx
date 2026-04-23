@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { EnvironmentId } from "@t3tools/contracts";
 import { StateEffect, type Extension } from "@codemirror/state";
 import { readEnvironmentApi } from "../../environmentApi";
+import { useComposerHandleContext } from "../../composerHandleContext";
 import { useEditorTabs } from "./useEditorTabs";
 import { EditorTabs } from "./EditorTabs";
 import { EditorBreadcrumb } from "./EditorBreadcrumb";
@@ -28,6 +29,8 @@ export function CodeEditor({ environmentId, cwd, activeFilePath }: CodeEditorPro
 
   const { tabs, activeIndex, activeTab, openTab, closeTab, setActiveIndex, markDirty, markSaved } =
     useEditorTabs();
+
+  const composerHandleRef = useComposerHandleContext();
 
   // Lazy-load CodeMirror on first mount
   useEffect(() => {
@@ -130,6 +133,51 @@ export function CodeEditor({ environmentId, cwd, activeFilePath }: CodeEditorPro
       EditorView.theme({
         "&": { height: "100%", fontSize: "13px" },
         ".cm-scroller": { overflow: "auto" },
+      }),
+      EditorView.domEventHandlers({
+        contextmenu: (event, view) => {
+          const sel = view.state.selection.main;
+          if (sel.empty) return false;
+          event.preventDefault();
+          const startLine = view.state.doc.lineAt(sel.from).number;
+          const endLine = view.state.doc.lineAt(sel.to).number;
+
+          // Create a simple context menu
+          const menu = document.createElement("div");
+          menu.className =
+            "fixed z-50 min-w-[180px] rounded-md border border-border bg-popover py-1 shadow-md";
+          menu.style.left = `${event.clientX}px`;
+          menu.style.top = `${event.clientY}px`;
+
+          const btn = document.createElement("button");
+          btn.className =
+            "flex w-full items-center px-3 py-1.5 text-xs text-popover-foreground hover:bg-accent hover:text-accent-foreground";
+          btn.textContent = "Mention Selection in Chat";
+          btn.onclick = () => {
+            composerHandleRef?.current?.insertTextAtCursor(
+              ` @${currentTabPath}:L${startLine}-L${endLine} `,
+            );
+            menu.remove();
+          };
+          menu.appendChild(btn);
+          document.body.appendChild(menu);
+
+          const dismiss = (e: MouseEvent) => {
+            if (!menu.contains(e.target as Node)) {
+              menu.remove();
+              document.removeEventListener("mousedown", dismiss);
+            }
+          };
+          const dismissOnEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+              menu.remove();
+              document.removeEventListener("keydown", dismissOnEsc);
+            }
+          };
+          document.addEventListener("mousedown", dismiss);
+          document.addEventListener("keydown", dismissOnEsc);
+          return true;
+        },
       }),
     ];
 

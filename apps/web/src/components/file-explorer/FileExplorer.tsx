@@ -5,6 +5,7 @@ import { FileTree } from "./FileTree";
 import { CodeEditor } from "./CodeEditor";
 import { FileTreeContextMenu, type TreeContextAction } from "./FileTreeContextMenu";
 import { readEnvironmentApi } from "../../environmentApi";
+import { useComposerHandleContext } from "../../composerHandleContext";
 
 interface FileExplorerProps {
   environmentId: EnvironmentId;
@@ -19,6 +20,8 @@ export function FileExplorer({ environmentId, cwd, theme }: FileExplorerProps) {
     y: number;
     entry: DirectoryEntry;
   } | null>(null);
+
+  const composerHandleRef = useComposerHandleContext();
 
   const handleSelectFile = useCallback((relativePath: string) => {
     setActiveFilePath(relativePath);
@@ -75,7 +78,7 @@ export function FileExplorer({ environmentId, cwd, theme }: FileExplorerProps) {
           break;
         }
         case "mentionInChat": {
-          // Implemented in Task 11
+          composerHandleRef?.current?.insertTextAtCursor(` @${entry.relativePath} `);
           break;
         }
       }
