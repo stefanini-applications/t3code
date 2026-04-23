@@ -8,6 +8,19 @@ import {
   FilesystemBrowseInput,
   FilesystemBrowseResult,
   FilesystemBrowseError,
+  FilesystemReadFileInput,
+  FilesystemReadFileResult,
+  FilesystemReadFileError,
+  FilesystemListDirectoryInput,
+  FilesystemListDirectoryResult,
+  FilesystemListDirectoryError,
+  FilesystemRenameInput,
+  FilesystemDeleteInput,
+  FilesystemCreateDirectoryInput,
+  FilesystemMutationResult,
+  FilesystemMutationError,
+  GitFileStatusResult,
+  GitFileStatusError,
 } from "./filesystem.ts";
 import {
   GitActionProgressEvent,
@@ -90,8 +103,14 @@ export const WS_METHODS = {
 
   // Filesystem methods
   filesystemBrowse: "filesystem.browse",
+  filesystemReadFile: "filesystem.readFile",
+  filesystemListDirectory: "filesystem.listDirectory",
+  filesystemRename: "filesystem.rename",
+  filesystemDelete: "filesystem.delete",
+  filesystemCreateDirectory: "filesystem.createDirectory",
 
   // Git methods
+  gitFileStatus: "git.fileStatus",
   gitPull: "git.pull",
   gitRefreshStatus: "git.refreshStatus",
   gitRunStackedAction: "git.runStackedAction",
@@ -177,6 +196,42 @@ export const WsFilesystemBrowseRpc = Rpc.make(WS_METHODS.filesystemBrowse, {
   payload: FilesystemBrowseInput,
   success: FilesystemBrowseResult,
   error: FilesystemBrowseError,
+});
+
+export const WsFilesystemReadFileRpc = Rpc.make(WS_METHODS.filesystemReadFile, {
+  payload: FilesystemReadFileInput,
+  success: FilesystemReadFileResult,
+  error: FilesystemReadFileError,
+});
+
+export const WsFilesystemListDirectoryRpc = Rpc.make(WS_METHODS.filesystemListDirectory, {
+  payload: FilesystemListDirectoryInput,
+  success: FilesystemListDirectoryResult,
+  error: FilesystemListDirectoryError,
+});
+
+export const WsFilesystemRenameRpc = Rpc.make(WS_METHODS.filesystemRename, {
+  payload: FilesystemRenameInput,
+  success: FilesystemMutationResult,
+  error: FilesystemMutationError,
+});
+
+export const WsFilesystemDeleteRpc = Rpc.make(WS_METHODS.filesystemDelete, {
+  payload: FilesystemDeleteInput,
+  success: FilesystemMutationResult,
+  error: FilesystemMutationError,
+});
+
+export const WsFilesystemCreateDirectoryRpc = Rpc.make(WS_METHODS.filesystemCreateDirectory, {
+  payload: FilesystemCreateDirectoryInput,
+  success: FilesystemMutationResult,
+  error: FilesystemMutationError,
+});
+
+export const WsGitFileStatusRpc = Rpc.make(WS_METHODS.gitFileStatus, {
+  payload: GitStatusInput,
+  success: GitFileStatusResult,
+  error: GitFileStatusError,
 });
 
 export const WsSubscribeGitStatusRpc = Rpc.make(WS_METHODS.subscribeGitStatus, {
@@ -365,6 +420,12 @@ export const WsRpcGroup = RpcGroup.make(
   WsProjectsWriteFileRpc,
   WsShellOpenInEditorRpc,
   WsFilesystemBrowseRpc,
+  WsFilesystemReadFileRpc,
+  WsFilesystemListDirectoryRpc,
+  WsFilesystemRenameRpc,
+  WsFilesystemDeleteRpc,
+  WsFilesystemCreateDirectoryRpc,
+  WsGitFileStatusRpc,
   WsSubscribeGitStatusRpc,
   WsGitPullRpc,
   WsGitRefreshStatusRpc,
