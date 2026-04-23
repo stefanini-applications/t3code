@@ -18,7 +18,13 @@ import {
 } from "../panelRouteSearch";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY } from "../rightPanelLayout";
-import { selectEnvironmentState, selectThreadExistsByRef, useStore } from "../store";
+import {
+  selectEnvironmentState,
+  selectProjectByRef,
+  selectThreadExistsByRef,
+  useStore,
+} from "../store";
+import { useTheme } from "../hooks/useTheme";
 import { createThreadSelectorByRef } from "../storeSelectors";
 import { resolveThreadRouteRef, buildThreadRouteParams } from "../threadRoutes";
 import { RightPanel } from "../components/RightPanel";
@@ -27,6 +33,9 @@ import { RightPanelSheet } from "../components/RightPanelSheet";
 import { SidebarInset } from "~/components/ui/sidebar";
 
 const DiffPanel = lazy(() => import("../components/DiffPanel"));
+const FileExplorer = lazy(() =>
+  import("../components/file-explorer/FileExplorer").then((m) => ({ default: m.FileExplorer })),
+);
 
 const DiffLoadingFallback = (props: { mode: DiffPanelMode }) => {
   return (
@@ -74,6 +83,15 @@ function ChatThreadRouteView() {
   });
   const routeThreadExists = threadExists || draftThreadExists;
   const serverThreadStarted = threadHasStarted(serverThread);
+  const activeProject = useStore((store) => {
+    if (!serverThread?.projectId || !threadRef) return undefined;
+    return selectProjectByRef(store, {
+      environmentId: threadRef.environmentId,
+      projectId: serverThread.projectId,
+    });
+  });
+  const activeCwd = serverThread?.worktreePath ?? activeProject?.cwd ?? null;
+  const { resolvedTheme } = useTheme();
   const environmentHasAnyThreads = environmentHasServerThreads || environmentHasDraftThreads;
   const panelTab = search.panel;
   const diffOpen = panelTab === "diff";
@@ -177,9 +195,25 @@ function ChatThreadRouteView() {
             {shouldRenderDiffContent ? <LazyDiffPanel mode="sidebar" /> : null}
           </div>
           <div style={{ display: panelTab === "files" ? "contents" : "none" }}>
-            <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-              File explorer coming soon
-            </div>
+            {activeCwd ? (
+              <Suspense
+                fallback={
+                  <div className="flex flex-1 items-center justify-center text-xs text-muted-foreground">
+                    Loading file explorer...
+                  </div>
+                }
+              >
+                <FileExplorer
+                  environmentId={threadRef.environmentId}
+                  cwd={activeCwd}
+                  theme={(resolvedTheme === "dark" ? "dark" : "light") as "light" | "dark"}
+                />
+              </Suspense>
+            ) : (
+              <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+                No workspace available
+              </div>
+            )}
           </div>
         </RightPanel>
       </>
@@ -212,9 +246,25 @@ function ChatThreadRouteView() {
           {shouldRenderDiffContent ? <LazyDiffPanel mode="sheet" /> : null}
         </div>
         <div style={{ display: panelTab === "files" ? "contents" : "none" }}>
-          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-            File explorer coming soon
-          </div>
+          {activeCwd ? (
+            <Suspense
+              fallback={
+                <div className="flex flex-1 items-center justify-center text-xs text-muted-foreground">
+                  Loading file explorer...
+                </div>
+              }
+            >
+              <FileExplorer
+                environmentId={threadRef.environmentId}
+                cwd={activeCwd}
+                theme={(resolvedTheme === "dark" ? "dark" : "light") as "light" | "dark"}
+              />
+            </Suspense>
+          ) : (
+            <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+              No workspace available
+            </div>
+          )}
         </div>
       </RightPanelSheet>
     </>
