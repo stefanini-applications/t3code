@@ -3,6 +3,8 @@ import { Group, Panel, Separator } from "react-resizable-panels";
 import type { DirectoryEntry, EnvironmentId } from "@t3tools/contracts";
 import { FileTree } from "./FileTree";
 import { CodeEditor } from "./CodeEditor";
+import { FileTreeContextMenu, type TreeContextAction } from "./FileTreeContextMenu";
+import { readEnvironmentApi } from "../../environmentApi";
 
 interface FileExplorerProps {
   environmentId: EnvironmentId;
@@ -12,14 +14,74 @@ interface FileExplorerProps {
 
 export function FileExplorer({ environmentId, cwd, theme }: FileExplorerProps) {
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    entry: DirectoryEntry;
+  } | null>(null);
 
   const handleSelectFile = useCallback((relativePath: string) => {
     setActiveFilePath(relativePath);
   }, []);
 
-  const handleContextMenu = useCallback((_event: React.MouseEvent, _entry: DirectoryEntry) => {
-    // Context menu implementation in Task 10
+  const handleContextMenu = useCallback((event: React.MouseEvent, entry: DirectoryEntry) => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY, entry });
   }, []);
+
+  const handleContextAction = useCallback(
+    async (action: TreeContextAction, entry: DirectoryEntry) => {
+      const api = readEnvironmentApi(environmentId);
+      if (!api) return;
+
+      switch (action) {
+        case "newFile": {
+          const name = window.prompt("File name:");
+          if (!name) return;
+          const relativePath = `${entry.relativePath}/${name}`;
+          await api.projects.writeFile({ cwd, relativePath, contents: "" });
+          setActiveFilePath(relativePath);
+          break;
+        }
+        case "newFolder": {
+          const name = window.prompt("Folder name:");
+          if (!name) return;
+          await api.filesystem.createDirectory({
+            cwd,
+            relativePath: `${entry.relativePath}/${name}`,
+          });
+          break;
+        }
+        case "rename": {
+          const newName = window.prompt("New name:", entry.name);
+          if (!newName || newName === entry.name) return;
+          const parentPath = entry.relativePath.split("/").slice(0, -1).join("/");
+          const newRelativePath = parentPath ? `${parentPath}/${newName}` : newName;
+          await api.filesystem.rename({
+            cwd,
+            oldRelativePath: entry.relativePath,
+            newRelativePath,
+          });
+          break;
+        }
+        case "delete": {
+          const confirmed = window.confirm(`Delete ${entry.relativePath}?`);
+          if (!confirmed) return;
+          await api.filesystem.delete({ cwd, relativePath: entry.relativePath });
+          break;
+        }
+        case "copyPath": {
+          await navigator.clipboard.writeText(entry.relativePath);
+          break;
+        }
+        case "mentionInChat": {
+          // Implemented in Task 11
+          break;
+        }
+      }
+    },
+    [environmentId, cwd],
+  );
 
   return (
     <Group orientation="horizontal" className="flex-1 min-h-0">
@@ -41,6 +103,11 @@ export function FileExplorer({ environmentId, cwd, theme }: FileExplorerProps) {
           onOpenFile={handleSelectFile}
         />
       </Panel>
+      <FileTreeContextMenu
+        state={contextMenu}
+        onClose={() => setContextMenu(null)}
+        onAction={handleContextAction}
+      />
     </Group>
   );
 }
