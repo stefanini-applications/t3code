@@ -25,7 +25,7 @@ import { checkpointDiffQueryOptions } from "~/lib/providerReactQuery";
 import { cn } from "~/lib/utils";
 import { readLocalApi } from "../localApi";
 import { resolvePathLinkTarget } from "../terminal-links";
-import { parseDiffRouteSearch, stripDiffSearchParams } from "../diffRouteSearch";
+import { parsePanelRouteSearch, stripPanelSearchParams } from "../panelRouteSearch";
 import { useTheme } from "../hooks/useTheme";
 import { buildPatchCacheKey } from "../lib/diffRendering";
 import { resolveDiffThemeName } from "../lib/diffRendering";
@@ -181,8 +181,11 @@ export default function DiffPanel({ mode = "inline" }: DiffPanelProps) {
     strict: false,
     select: (params) => resolveThreadRouteRef(params),
   });
-  const diffSearch = useSearch({ strict: false, select: (search) => parseDiffRouteSearch(search) });
-  const diffOpen = diffSearch.diff === "1";
+  const diffSearch = useSearch({
+    strict: false,
+    select: (search) => parsePanelRouteSearch(search),
+  });
+  const diffOpen = diffSearch.panel === "diff";
   const activeThreadId = routeThreadRef?.threadId ?? null;
   const activeThread = useStore(
     useMemo(() => createThreadSelectorByRef(routeThreadRef), [routeThreadRef]),
@@ -349,8 +352,8 @@ export default function DiffPanel({ mode = "inline" }: DiffPanelProps) {
       to: "/$environmentId/$threadId",
       params: buildThreadRouteParams(scopeThreadRef(activeThread.environmentId, activeThread.id)),
       search: (previous) => {
-        const rest = stripDiffSearchParams(previous);
-        return { ...rest, diff: "1", diffTurnId: turnId };
+        const rest = stripPanelSearchParams(previous);
+        return { ...rest, panel: "diff" as const, diffTurnId: turnId };
       },
     });
   };
@@ -360,8 +363,8 @@ export default function DiffPanel({ mode = "inline" }: DiffPanelProps) {
       to: "/$environmentId/$threadId",
       params: buildThreadRouteParams(scopeThreadRef(activeThread.environmentId, activeThread.id)),
       search: (previous) => {
-        const rest = stripDiffSearchParams(previous);
-        return { ...rest, diff: "1" };
+        const rest = stripPanelSearchParams(previous);
+        return { ...rest, panel: "diff" as const };
       },
     });
   };
