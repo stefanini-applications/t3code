@@ -76,9 +76,14 @@ export const makeWorkspacePaths = Effect.gen(function* () {
 
       const absolutePath = path.resolve(input.workspaceRoot, normalizedInputPath);
       const relativeToRoot = toPosixRelativePath(path.relative(input.workspaceRoot, absolutePath));
+
+      // "." resolves to the workspace root itself (relativeToRoot === "").
+      // That is a valid target — e.g. listing the root directory.
+      if (relativeToRoot.length === 0 || relativeToRoot === ".") {
+        return { absolutePath, relativePath: "." };
+      }
+
       if (
-        relativeToRoot.length === 0 ||
-        relativeToRoot === "." ||
         relativeToRoot.startsWith("../") ||
         relativeToRoot === ".." ||
         path.isAbsolute(relativeToRoot)

@@ -92,6 +92,23 @@ it.layer(TestLayer)("WorkspacePathsLive", (it) => {
   });
 
   describe("resolveRelativePathWithinRoot", () => {
+    it.effect("resolves '.' to the workspace root itself", () =>
+      Effect.gen(function* () {
+        const workspacePaths = yield* WorkspacePaths;
+        const cwd = yield* makeTempDir();
+
+        const resolved = yield* workspacePaths.resolveRelativePathWithinRoot({
+          workspaceRoot: cwd,
+          relativePath: ".",
+        });
+
+        expect(resolved).toEqual({
+          absolutePath: cwd,
+          relativePath: ".",
+        });
+      }),
+    );
+
     it.effect("resolves relative paths inside the workspace root", () =>
       Effect.gen(function* () {
         const workspacePaths = yield* WorkspacePaths;

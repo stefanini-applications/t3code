@@ -126,3 +126,32 @@ describe("selectionTouchesMentionBoundary", () => {
     ).toBe(true);
   });
 });
+
+describe("line-range mentions", () => {
+  it("parses @path:L10-L20 as a mention with lineRange", () => {
+    const segments = splitPromptIntoComposerSegments("Check @src/index.ts:L10-L20 here");
+    expect(segments).toEqual([
+      { type: "text", text: "Check " },
+      { type: "mention", path: "src/index.ts", lineRange: { start: 10, end: 20 } },
+      { type: "text", text: " here" },
+    ]);
+  });
+
+  it("parses plain @path without line range", () => {
+    const segments = splitPromptIntoComposerSegments("Check @src/index.ts here");
+    expect(segments).toEqual([
+      { type: "text", text: "Check " },
+      { type: "mention", path: "src/index.ts" },
+      { type: "text", text: " here" },
+    ]);
+  });
+
+  it("handles line range at end of string followed by space", () => {
+    const segments = splitPromptIntoComposerSegments("Look at @src/app.tsx:L1-L5 ");
+    expect(segments).toEqual([
+      { type: "text", text: "Look at " },
+      { type: "mention", path: "src/app.tsx", lineRange: { start: 1, end: 5 } },
+      { type: "text", text: " " },
+    ]);
+  });
+});

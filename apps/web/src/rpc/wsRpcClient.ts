@@ -70,6 +70,11 @@ export interface WsRpcClient {
   };
   readonly filesystem: {
     readonly browse: RpcUnaryMethod<typeof WS_METHODS.filesystemBrowse>;
+    readonly readFile: RpcUnaryMethod<typeof WS_METHODS.filesystemReadFile>;
+    readonly listDirectory: RpcUnaryMethod<typeof WS_METHODS.filesystemListDirectory>;
+    readonly rename: RpcUnaryMethod<typeof WS_METHODS.filesystemRename>;
+    readonly delete: RpcUnaryMethod<typeof WS_METHODS.filesystemDelete>;
+    readonly createDirectory: RpcUnaryMethod<typeof WS_METHODS.filesystemCreateDirectory>;
   };
   readonly shell: {
     readonly openInEditor: (input: {
@@ -99,6 +104,7 @@ export interface WsRpcClient {
     readonly preparePullRequestThread: RpcUnaryMethod<
       typeof WS_METHODS.gitPreparePullRequestThread
     >;
+    readonly fileStatus: RpcUnaryMethod<typeof WS_METHODS.gitFileStatus>;
   };
   readonly server: {
     readonly getConfig: RpcUnaryNoArgMethod<typeof WS_METHODS.serverGetConfig>;
@@ -116,6 +122,7 @@ export interface WsRpcClient {
     readonly dispatchCommand: RpcUnaryMethod<typeof ORCHESTRATION_WS_METHODS.dispatchCommand>;
     readonly getTurnDiff: RpcUnaryMethod<typeof ORCHESTRATION_WS_METHODS.getTurnDiff>;
     readonly getFullThreadDiff: RpcUnaryMethod<typeof ORCHESTRATION_WS_METHODS.getFullThreadDiff>;
+    readonly getWorkingTreeDiff: RpcUnaryMethod<typeof ORCHESTRATION_WS_METHODS.getWorkingTreeDiff>;
     readonly subscribeShell: RpcStreamMethod<typeof ORCHESTRATION_WS_METHODS.subscribeShell>;
     readonly subscribeThread: RpcInputStreamMethod<typeof ORCHESTRATION_WS_METHODS.subscribeThread>;
   };
@@ -150,6 +157,14 @@ export function createWsRpcClient(transport: WsTransport): WsRpcClient {
     },
     filesystem: {
       browse: (input) => transport.request((client) => client[WS_METHODS.filesystemBrowse](input)),
+      readFile: (input) =>
+        transport.request((client) => client[WS_METHODS.filesystemReadFile](input)),
+      listDirectory: (input) =>
+        transport.request((client) => client[WS_METHODS.filesystemListDirectory](input)),
+      rename: (input) => transport.request((client) => client[WS_METHODS.filesystemRename](input)),
+      delete: (input) => transport.request((client) => client[WS_METHODS.filesystemDelete](input)),
+      createDirectory: (input) =>
+        transport.request((client) => client[WS_METHODS.filesystemCreateDirectory](input)),
     },
     shell: {
       openInEditor: (input) =>
@@ -203,6 +218,7 @@ export function createWsRpcClient(transport: WsTransport): WsRpcClient {
         transport.request((client) => client[WS_METHODS.gitResolvePullRequest](input)),
       preparePullRequestThread: (input) =>
         transport.request((client) => client[WS_METHODS.gitPreparePullRequestThread](input)),
+      fileStatus: (input) => transport.request((client) => client[WS_METHODS.gitFileStatus](input)),
     },
     server: {
       getConfig: () => transport.request((client) => client[WS_METHODS.serverGetConfig]({})),
@@ -239,6 +255,8 @@ export function createWsRpcClient(transport: WsTransport): WsRpcClient {
         transport.request((client) => client[ORCHESTRATION_WS_METHODS.getTurnDiff](input)),
       getFullThreadDiff: (input) =>
         transport.request((client) => client[ORCHESTRATION_WS_METHODS.getFullThreadDiff](input)),
+      getWorkingTreeDiff: (input) =>
+        transport.request((client) => client[ORCHESTRATION_WS_METHODS.getWorkingTreeDiff](input)),
       subscribeShell: (listener, options) =>
         transport.subscribe(
           (client) => client[ORCHESTRATION_WS_METHODS.subscribeShell]({}),

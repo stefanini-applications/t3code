@@ -201,6 +201,21 @@ function createMockEnvironmentApi(input: {
     projects: {} as EnvironmentApi["projects"],
     filesystem: {
       browse: input.browse,
+      readFile: (() => {
+        throw new Error("Not implemented in browser test.");
+      }) as EnvironmentApi["filesystem"]["readFile"],
+      listDirectory: (() => {
+        throw new Error("Not implemented in browser test.");
+      }) as EnvironmentApi["filesystem"]["listDirectory"],
+      rename: (() => {
+        throw new Error("Not implemented in browser test.");
+      }) as EnvironmentApi["filesystem"]["rename"],
+      delete: (() => {
+        throw new Error("Not implemented in browser test.");
+      }) as EnvironmentApi["filesystem"]["delete"],
+      createDirectory: (() => {
+        throw new Error("Not implemented in browser test.");
+      }) as EnvironmentApi["filesystem"]["createDirectory"],
     },
     git: {} as EnvironmentApi["git"],
     orchestration: {

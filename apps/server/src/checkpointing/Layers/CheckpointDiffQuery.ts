@@ -3,6 +3,8 @@ import {
   type OrchestrationGetFullThreadDiffInput,
   type OrchestrationGetFullThreadDiffResult,
   type OrchestrationGetTurnDiffResult as OrchestrationGetTurnDiffResultType,
+  type OrchestrationGetWorkingTreeDiffInput,
+  type OrchestrationGetWorkingTreeDiffResult,
 } from "@t3tools/contracts";
 import { Effect, Layer, Option, Schema } from "effect";
 
@@ -159,9 +161,73 @@ const make = Effect.gen(function* () {
       toTurnCount: input.toTurnCount,
     }).pipe(Effect.map((result): OrchestrationGetFullThreadDiffResult => result));
 
+  const getWorkingTreeDiff: CheckpointDiffQueryShape["getWorkingTreeDiff"] = Effect.fn(
+    "getWorkingTreeDiff",
+  )(function* (input: OrchestrationGetWorkingTreeDiffInput) {
+    const operation = "CheckpointDiffQuery.getWorkingTreeDiff";
+
+    const threadContext = yield* projectionSnapshotQuery.getThreadCheckpointContext(input.threadId);
+
+    if (Option.isNone(threadContext)) {
+      return yield* new CheckpointInvariantError({
+        operation,
+        detail: `Thread '${input.threadId}' not found.`,
+      });
+    }
+
+    const workspaceCwd = threadContext.value.worktreePath ?? threadContext.value.workspaceRoot;
+    if (!workspaceCwd) {
+      return yield* new CheckpointInvariantError({
+        operation,
+        detail: `Workspace path missing for thread '${input.threadId}' when computing working tree diff.`,
+      });
+    }
+
+    // Find the latest checkpoint to diff against.
+    const maxTurnCount = threadContext.value.checkpoints.reduce(
+      (max, checkpoint) => Math.max(max, checkpoint.checkpointTurnCount),
+      0,
+    );
+
+    // Use the latest checkpoint as the base, or fallback to checkpoint 0 (initial state).
+    const baseCheckpointRef =
+      maxTurnCount > 0
+        ? (threadContext.value.checkpoints.find(
+            (checkpoint) => checkpoint.checkpointTurnCount === maxTurnCount,
+          )?.checkpointRef ?? checkpointRefForThreadTurn(input.threadId, 0))
+        : checkpointRefForThreadTurn(input.threadId, 0);
+
+    const refExists = yield* checkpointStore.hasCheckpointRef({
+      cwd: workspaceCwd,
+      checkpointRef: baseCheckpointRef,
+    });
+
+    if (!refExists) {
+      // If no checkpoint exists yet, return an empty diff.
+      const emptyResult: OrchestrationGetWorkingTreeDiffResult = {
+        threadId: input.threadId,
+        diff: "",
+      };
+      return emptyResult;
+    }
+
+    const diff = yield* checkpointStore.diffCheckpointToWorkTree({
+      cwd: workspaceCwd,
+      fromCheckpointRef: baseCheckpointRef,
+      fallbackFromToHead: true,
+    });
+
+    const result: OrchestrationGetWorkingTreeDiffResult = {
+      threadId: input.threadId,
+      diff,
+    };
+    return result;
+  });
+
   return {
     getTurnDiff,
     getFullThreadDiff,
+    getWorkingTreeDiff,
   } satisfies CheckpointDiffQueryShape;
 });
 

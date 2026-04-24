@@ -11,6 +11,8 @@ import type {
   OrchestrationGetFullThreadDiffResult,
   OrchestrationGetTurnDiffInput,
   OrchestrationGetTurnDiffResult,
+  OrchestrationGetWorkingTreeDiffInput,
+  OrchestrationGetWorkingTreeDiffResult,
 } from "@t3tools/contracts";
 import { Context } from "effect";
 import type { Effect } from "effect";
@@ -38,6 +40,16 @@ export interface CheckpointDiffQueryShape {
   readonly getFullThreadDiff: (
     input: OrchestrationGetFullThreadDiffInput,
   ) => Effect.Effect<OrchestrationGetFullThreadDiffResult, CheckpointServiceError>;
+
+  /**
+   * Read the working tree diff relative to the latest checkpoint.
+   *
+   * Diffs the latest checkpoint commit against the current working tree to
+   * capture uncommitted user edits.
+   */
+  readonly getWorkingTreeDiff: (
+    input: OrchestrationGetWorkingTreeDiffInput,
+  ) => Effect.Effect<OrchestrationGetWorkingTreeDiffResult, CheckpointServiceError>;
 }
 
 /**

@@ -335,6 +335,8 @@ export interface ChatComposerHandle {
   }) => void;
   /** Insert a terminal context from the terminal drawer. */
   addTerminalContext: (selection: TerminalContextSelection) => void;
+  /** Insert arbitrary text at the current cursor position (e.g. `@path ` from file explorer). */
+  insertTextAtCursor: (text: string) => void;
   /** Get the current prompt/effort/model state for use in send. */
   getSendContext: () => {
     prompt: string;
@@ -1648,6 +1650,10 @@ export const ChatComposer = memo(
             composerEditorRef.current?.focusAt(nextCollapsedCursor);
           });
         },
+        insertTextAtCursor: (text: string) => {
+          const snapshot = readComposerSnapshot();
+          applyPromptReplacement(snapshot.cursor, snapshot.cursor, text);
+        },
         getSendContext: () => ({
           prompt: promptRef.current,
           images: composerImagesRef.current,
@@ -1671,6 +1677,7 @@ export const ChatComposer = memo(
         composerTerminalContextsRef,
         isComposerModelPickerOpen,
         readComposerSnapshot,
+        applyPromptReplacement,
         selectedModel,
         selectedModelOptionsForDispatch,
         selectedModelSelection,

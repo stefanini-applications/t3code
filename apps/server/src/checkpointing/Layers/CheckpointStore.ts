@@ -254,6 +254,39 @@ const makeCheckpointStore = Effect.gen(function* () {
     },
   );
 
+  const diffCheckpointToWorkTree: CheckpointStoreShape["diffCheckpointToWorkTree"] = Effect.fn(
+    "diffCheckpointToWorkTree",
+  )(function* (input) {
+    const operation = "CheckpointStore.diffCheckpointToWorkTree";
+
+    let fromCommitOid = yield* resolveCheckpointCommit(input.cwd, input.fromCheckpointRef);
+
+    if (!fromCommitOid && input.fallbackFromToHead === true) {
+      const headCommit = yield* resolveHeadCommit(input.cwd);
+      if (headCommit) {
+        fromCommitOid = headCommit;
+      }
+    }
+
+    if (!fromCommitOid) {
+      return yield* new GitCommandError({
+        operation,
+        command: "git diff",
+        cwd: input.cwd,
+        detail: "Checkpoint ref is unavailable for working tree diff operation.",
+      });
+    }
+
+    const result = yield* git.execute({
+      operation,
+      cwd: input.cwd,
+      args: ["diff", "--patch", "--minimal", "--no-color", fromCommitOid],
+      maxOutputBytes: CHECKPOINT_DIFF_MAX_OUTPUT_BYTES,
+    });
+
+    return result.stdout;
+  });
+
   const deleteCheckpointRefs: CheckpointStoreShape["deleteCheckpointRefs"] = Effect.fn(
     "deleteCheckpointRefs",
   )(function* (input) {
@@ -278,6 +311,7 @@ const makeCheckpointStore = Effect.gen(function* () {
     hasCheckpointRef,
     restoreCheckpoint,
     diffCheckpoints,
+    diffCheckpointToWorkTree,
     deleteCheckpointRefs,
   } satisfies CheckpointStoreShape;
 });

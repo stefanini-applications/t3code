@@ -18,7 +18,19 @@ import type {
   GitStatusResult,
   GitCreateBranchResult,
 } from "./git.ts";
-import type { FilesystemBrowseInput, FilesystemBrowseResult } from "./filesystem.ts";
+import type {
+  FilesystemBrowseInput,
+  FilesystemBrowseResult,
+  FilesystemReadFileInput,
+  FilesystemReadFileResult,
+  FilesystemListDirectoryInput,
+  FilesystemListDirectoryResult,
+  FilesystemRenameInput,
+  FilesystemDeleteInput,
+  FilesystemCreateDirectoryInput,
+  FilesystemMutationResult,
+  GitFileStatusResult,
+} from "./filesystem.ts";
 import type {
   ProjectSearchEntriesInput,
   ProjectSearchEntriesResult,
@@ -47,6 +59,8 @@ import type {
   OrchestrationGetFullThreadDiffResult,
   OrchestrationGetTurnDiffInput,
   OrchestrationGetTurnDiffResult,
+  OrchestrationGetWorkingTreeDiffInput,
+  OrchestrationGetWorkingTreeDiffResult,
   OrchestrationShellStreamItem,
   OrchestrationSubscribeThreadInput,
   OrchestrationThreadStreamItem,
@@ -247,6 +261,11 @@ export interface EnvironmentApi {
   };
   filesystem: {
     browse: (input: FilesystemBrowseInput) => Promise<FilesystemBrowseResult>;
+    readFile: (input: FilesystemReadFileInput) => Promise<FilesystemReadFileResult>;
+    listDirectory: (input: FilesystemListDirectoryInput) => Promise<FilesystemListDirectoryResult>;
+    rename: (input: FilesystemRenameInput) => Promise<FilesystemMutationResult>;
+    delete: (input: FilesystemDeleteInput) => Promise<FilesystemMutationResult>;
+    createDirectory: (input: FilesystemCreateDirectoryInput) => Promise<FilesystemMutationResult>;
   };
   git: {
     listBranches: (input: GitListBranchesInput) => Promise<GitListBranchesResult>;
@@ -260,6 +279,7 @@ export interface EnvironmentApi {
       input: GitPreparePullRequestThreadInput,
     ) => Promise<GitPreparePullRequestThreadResult>;
     pull: (input: GitPullInput) => Promise<GitPullResult>;
+    fileStatus: (input: GitStatusInput) => Promise<GitFileStatusResult>;
     refreshStatus: (input: GitStatusInput) => Promise<GitStatusResult>;
     onStatus: (
       input: GitStatusInput,
@@ -275,6 +295,9 @@ export interface EnvironmentApi {
     getFullThreadDiff: (
       input: OrchestrationGetFullThreadDiffInput,
     ) => Promise<OrchestrationGetFullThreadDiffResult>;
+    getWorkingTreeDiff: (
+      input: OrchestrationGetWorkingTreeDiffInput,
+    ) => Promise<OrchestrationGetWorkingTreeDiffResult>;
     subscribeShell: (
       callback: (event: OrchestrationShellStreamItem) => void,
       options?: {

@@ -25,6 +25,7 @@ export const ORCHESTRATION_WS_METHODS = {
   dispatchCommand: "orchestration.dispatchCommand",
   getTurnDiff: "orchestration.getTurnDiff",
   getFullThreadDiff: "orchestration.getFullThreadDiff",
+  getWorkingTreeDiff: "orchestration.getWorkingTreeDiff",
   replayEvents: "orchestration.replayEvents",
   subscribeShell: "orchestration.subscribeShell",
   subscribeThread: "orchestration.subscribeThread",
@@ -1162,6 +1163,18 @@ export type OrchestrationGetFullThreadDiffInput = typeof OrchestrationGetFullThr
 export const OrchestrationGetFullThreadDiffResult = ThreadTurnDiff;
 export type OrchestrationGetFullThreadDiffResult = typeof OrchestrationGetFullThreadDiffResult.Type;
 
+export const OrchestrationGetWorkingTreeDiffInput = Schema.Struct({
+  threadId: ThreadId,
+});
+export type OrchestrationGetWorkingTreeDiffInput = typeof OrchestrationGetWorkingTreeDiffInput.Type;
+
+export const OrchestrationGetWorkingTreeDiffResult = Schema.Struct({
+  threadId: ThreadId,
+  diff: Schema.String,
+});
+export type OrchestrationGetWorkingTreeDiffResult =
+  typeof OrchestrationGetWorkingTreeDiffResult.Type;
+
 export const OrchestrationReplayEventsInput = Schema.Struct({
   fromSequenceExclusive: NonNegativeInt,
 });
@@ -1182,6 +1195,10 @@ export const OrchestrationRpcSchemas = {
   getFullThreadDiff: {
     input: OrchestrationGetFullThreadDiffInput,
     output: OrchestrationGetFullThreadDiffResult,
+  },
+  getWorkingTreeDiff: {
+    input: OrchestrationGetWorkingTreeDiffInput,
+    output: OrchestrationGetWorkingTreeDiffResult,
   },
   replayEvents: {
     input: OrchestrationReplayEventsInput,
@@ -1223,6 +1240,14 @@ export class OrchestrationGetTurnDiffError extends Schema.TaggedErrorClass<Orche
 
 export class OrchestrationGetFullThreadDiffError extends Schema.TaggedErrorClass<OrchestrationGetFullThreadDiffError>()(
   "OrchestrationGetFullThreadDiffError",
+  {
+    message: TrimmedNonEmptyString,
+    cause: Schema.optional(Schema.Defect),
+  },
+) {}
+
+export class OrchestrationGetWorkingTreeDiffError extends Schema.TaggedErrorClass<OrchestrationGetWorkingTreeDiffError>()(
+  "OrchestrationGetWorkingTreeDiffError",
   {
     message: TrimmedNonEmptyString,
     cause: Schema.optional(Schema.Defect),
