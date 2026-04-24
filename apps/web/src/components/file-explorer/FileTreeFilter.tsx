@@ -15,25 +15,27 @@ export function FileTreeFilter({ value, onChange }: FileTreeFilterProps) {
   }, [onChange]);
 
   return (
-    <div className="flex items-center gap-1.5 border-b border-border px-2 py-1.5">
-      <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
-      <input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Filter files..."
-        className="min-w-0 flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground outline-none"
-      />
-      {value.length > 0 && (
-        <button
-          type="button"
-          onClick={handleClear}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <XIcon className="size-3" />
-        </button>
-      )}
+    <div className="border-b border-border px-2 py-1.5">
+      <div className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1">
+        <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Filter files..."
+          className="min-w-0 flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground outline-none"
+        />
+        {value.length > 0 && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <XIcon className="size-3" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

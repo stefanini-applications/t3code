@@ -16,19 +16,29 @@ interface ExpandedDir {
   isLoading: boolean;
 }
 
+export type RootLoadState = "idle" | "loading" | "loaded" | "error";
+
 export function useFileTree({ environmentId, cwd }: UseFileTreeOptions) {
   const [expandedDirs, setExpandedDirs] = useState<ReadonlyMap<string, ExpandedDir>>(new Map());
   const [rootEntries, setRootEntries] = useState<readonly DirectoryEntry[] | null>(null);
-  const [rootLoading, setRootLoading] = useState(false);
+  const [rootLoadState, setRootLoadState] = useState<RootLoadState>("idle");
+  const [rootError, setRootError] = useState<string | null>(null);
   const loadedRef = useRef(new Set<string>());
 
   const loadDirectory = useCallback(
     async (relativePath: string) => {
       const api = readEnvironmentApi(environmentId);
-      if (!api) return;
+      if (!api) {
+        if (relativePath === ".") {
+          setRootLoadState("error");
+          setRootError("Environment not connected");
+        }
+        return;
+      }
 
       if (relativePath === ".") {
-        setRootLoading(true);
+        setRootLoadState("loading");
+        setRootError(null);
       } else {
         setExpandedDirs((prev) => {
           const next = new Map(prev);
@@ -48,7 +58,7 @@ export function useFileTree({ environmentId, cwd }: UseFileTreeOptions) {
 
         if (relativePath === ".") {
           setRootEntries(result.entries);
-          setRootLoading(false);
+          setRootLoadState("loaded");
         } else {
           setExpandedDirs((prev) => {
             const next = new Map(prev);
@@ -57,9 +67,10 @@ export function useFileTree({ environmentId, cwd }: UseFileTreeOptions) {
           });
         }
         loadedRef.current.add(relativePath);
-      } catch {
+      } catch (err) {
         if (relativePath === ".") {
-          setRootLoading(false);
+          setRootLoadState("error");
+          setRootError(err instanceof Error ? err.message : "Failed to list directory");
         } else {
           setExpandedDirs((prev) => {
             const next = new Map(prev);
@@ -74,27 +85,24 @@ export function useFileTree({ environmentId, cwd }: UseFileTreeOptions) {
 
   const toggleExpand = useCallback(
     (relativePath: string) => {
+      // Collapse: if currently expanded, just remove from map and return
       setExpandedDirs((prev) => {
         if (prev.has(relativePath)) {
           const next = new Map(prev);
           next.delete(relativePath);
           return next;
         }
-        return prev;
-      });
 
-      // If not loaded yet, load it
-      if (!loadedRef.current.has(relativePath)) {
-        void loadDirectory(relativePath);
-      } else {
-        // Re-expand: just put it back
-        setExpandedDirs((prev) => {
-          if (prev.has(relativePath)) return prev;
-          // Re-load to get fresh data
+        // Expand: if already loaded before, restore with a re-fetch
+        if (loadedRef.current.has(relativePath)) {
           void loadDirectory(relativePath);
           return prev;
-        });
-      }
+        }
+
+        // Never loaded: trigger the first load
+        void loadDirectory(relativePath);
+        return prev;
+      });
     },
     [loadDirectory],
   );
@@ -129,7 +137,8 @@ export function useFileTree({ environmentId, cwd }: UseFileTreeOptions) {
 
   return {
     rootEntries,
-    rootLoading,
+    rootLoadState,
+    rootError,
     expandedDirs,
     loadRoot,
     toggleExpand,

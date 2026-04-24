@@ -57,6 +57,8 @@ import {
   OrchestrationGetSnapshotError,
   OrchestrationGetTurnDiffError,
   OrchestrationGetTurnDiffInput,
+  OrchestrationGetWorkingTreeDiffError,
+  OrchestrationGetWorkingTreeDiffInput,
   OrchestrationReplayEventsError,
   OrchestrationReplayEventsInput,
   OrchestrationRpcSchemas,
@@ -362,6 +364,15 @@ export const WsOrchestrationGetFullThreadDiffRpc = Rpc.make(
   },
 );
 
+export const WsOrchestrationGetWorkingTreeDiffRpc = Rpc.make(
+  ORCHESTRATION_WS_METHODS.getWorkingTreeDiff,
+  {
+    payload: OrchestrationGetWorkingTreeDiffInput,
+    success: OrchestrationRpcSchemas.getWorkingTreeDiff.output,
+    error: OrchestrationGetWorkingTreeDiffError,
+  },
+);
+
 export const WsOrchestrationReplayEventsRpc = Rpc.make(ORCHESTRATION_WS_METHODS.replayEvents, {
   payload: OrchestrationReplayEventsInput,
   success: OrchestrationRpcSchemas.replayEvents.output,
@@ -451,6 +462,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsOrchestrationDispatchCommandRpc,
   WsOrchestrationGetTurnDiffRpc,
   WsOrchestrationGetFullThreadDiffRpc,
+  WsOrchestrationGetWorkingTreeDiffRpc,
   WsOrchestrationReplayEventsRpc,
   WsOrchestrationSubscribeShellRpc,
   WsOrchestrationSubscribeThreadRpc,

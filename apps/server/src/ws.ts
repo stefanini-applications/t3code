@@ -13,6 +13,7 @@ import {
   OrchestrationGetFullThreadDiffError,
   OrchestrationGetSnapshotError,
   OrchestrationGetTurnDiffError,
+  OrchestrationGetWorkingTreeDiffError,
   ORCHESTRATION_WS_METHODS,
   ProjectSearchEntriesError,
   ProjectWriteFileError,
@@ -639,6 +640,20 @@ const makeWsRpcLayer = (currentSessionId: AuthSessionId) =>
                 (cause) =>
                   new OrchestrationGetFullThreadDiffError({
                     message: "Failed to load full thread diff",
+                    cause,
+                  }),
+              ),
+            ),
+            { "rpc.aggregate": "orchestration" },
+          ),
+        [ORCHESTRATION_WS_METHODS.getWorkingTreeDiff]: (input) =>
+          observeRpcEffect(
+            ORCHESTRATION_WS_METHODS.getWorkingTreeDiff,
+            checkpointDiffQuery.getWorkingTreeDiff(input).pipe(
+              Effect.mapError(
+                (cause) =>
+                  new OrchestrationGetWorkingTreeDiffError({
+                    message: "Failed to load working tree diff",
                     cause,
                   }),
               ),

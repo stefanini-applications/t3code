@@ -6,6 +6,7 @@ export interface PanelRouteSearch {
   panel?: PanelTab | undefined;
   diffTurnId?: TurnId | undefined;
   diffFilePath?: string | undefined;
+  diffWorkingTree?: boolean | undefined;
 }
 
 function isPanelTabValue(value: unknown): value is PanelTab {
@@ -22,9 +23,15 @@ function normalizeSearchString(value: unknown): string | undefined {
 
 export function stripPanelSearchParams<T extends Record<string, unknown>>(
   params: T,
-): Omit<T, "panel" | "diffTurnId" | "diffFilePath"> {
-  const { panel: _panel, diffTurnId: _diffTurnId, diffFilePath: _diffFilePath, ...rest } = params;
-  return rest as Omit<T, "panel" | "diffTurnId" | "diffFilePath">;
+): Omit<T, "panel" | "diffTurnId" | "diffFilePath" | "diffWorkingTree"> {
+  const {
+    panel: _panel,
+    diffTurnId: _diffTurnId,
+    diffFilePath: _diffFilePath,
+    diffWorkingTree: _diffWorkingTree,
+    ...rest
+  } = params;
+  return rest as Omit<T, "panel" | "diffTurnId" | "diffFilePath" | "diffWorkingTree">;
 }
 
 /**
@@ -41,13 +48,19 @@ export function parsePanelRouteSearch(search: Record<string, unknown>): PanelRou
   }
 
   const isDiff = panel === "diff";
-  const diffTurnIdRaw = isDiff ? normalizeSearchString(search.diffTurnId) : undefined;
+  const diffWorkingTree =
+    isDiff && (search.diffWorkingTree === true || search.diffWorkingTree === "1")
+      ? true
+      : undefined;
+  const diffTurnIdRaw =
+    isDiff && !diffWorkingTree ? normalizeSearchString(search.diffTurnId) : undefined;
   const diffTurnId = diffTurnIdRaw ? TurnId.make(diffTurnIdRaw) : undefined;
   const diffFilePath =
     isDiff && diffTurnId ? normalizeSearchString(search.diffFilePath) : undefined;
 
   return {
     ...(panel ? { panel } : {}),
+    ...(diffWorkingTree ? { diffWorkingTree } : {}),
     ...(diffTurnId ? { diffTurnId } : {}),
     ...(diffFilePath ? { diffFilePath } : {}),
   };

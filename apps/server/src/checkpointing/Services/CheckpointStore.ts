@@ -34,6 +34,12 @@ export interface DiffCheckpointsInput {
   readonly fallbackFromToHead?: boolean;
 }
 
+export interface DiffCheckpointToWorkTreeInput {
+  readonly cwd: string;
+  readonly fromCheckpointRef: CheckpointRef;
+  readonly fallbackFromToHead?: boolean;
+}
+
 export interface DeleteCheckpointRefsInput {
   readonly cwd: string;
   readonly checkpointRefs: ReadonlyArray<CheckpointRef>;
@@ -80,6 +86,15 @@ export interface CheckpointStoreShape {
    */
   readonly diffCheckpoints: (
     input: DiffCheckpointsInput,
+  ) => Effect.Effect<string, CheckpointStoreError>;
+
+  /**
+   * Compute patch diff between a checkpoint ref and the current working tree.
+   *
+   * Can optionally treat missing checkpoint ref as `HEAD`.
+   */
+  readonly diffCheckpointToWorkTree: (
+    input: DiffCheckpointToWorkTreeInput,
   ) => Effect.Effect<string, CheckpointStoreError>;
 
   /**

@@ -208,13 +208,15 @@ code {
   background: rgba(255, 255, 255, 0.18);
 }
 
-.turn-chip-strip {
+.turn-chip-strip,
+.editor-tabs-scroll {
   scrollbar-width: none;
   -ms-overflow-style: none;
   overscroll-behavior-x: contain;
 }
 
-.turn-chip-strip::-webkit-scrollbar {
+.turn-chip-strip::-webkit-scrollbar,
+.editor-tabs-scroll::-webkit-scrollbar {
   display: none;
 }
 

@@ -27,11 +27,16 @@ export function FileTree({
   onSelectFile,
   onContextMenu,
 }: FileTreeProps) {
-  const { rootEntries, rootLoading, expandedDirs, loadRoot, toggleExpand } = useFileTree({
+  const { rootEntries, rootLoadState, rootError, expandedDirs, loadRoot, toggleExpand } =
+    useFileTree({
+      environmentId,
+      cwd,
+    });
+  const { statusMap } = useGitFileStatus({
     environmentId,
     cwd,
+    enabled: rootLoadState === "loaded",
   });
-  const { statusMap } = useGitFileStatus({ environmentId, cwd, enabled: true });
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
@@ -73,12 +78,32 @@ export function FileTree({
     return result;
   }, [rootEntries, expandedDirs, filter]);
 
-  if (rootLoading && !rootEntries) {
+  // Idle or loading: show loading indicator
+  if (rootLoadState === "idle" || rootLoadState === "loading") {
     return (
       <div className="flex h-full flex-col">
         <FileTreeFilter value={filter} onChange={setFilter} />
         <div className="flex flex-1 items-center justify-center text-xs text-muted-foreground">
           Loading...
+        </div>
+      </div>
+    );
+  }
+
+  // Error state: load was attempted and failed
+  if (rootLoadState === "error") {
+    return (
+      <div className="flex h-full flex-col">
+        <FileTreeFilter value={filter} onChange={setFilter} />
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center text-xs text-muted-foreground">
+          <span>{rootError ?? "Failed to load files"}</span>
+          <button
+            type="button"
+            onClick={loadRoot}
+            className="rounded-md border border-border px-2.5 py-1 text-xs hover:bg-accent"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

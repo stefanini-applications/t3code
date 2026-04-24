@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { Group, Panel, Separator } from "react-resizable-panels";
 import type { DirectoryEntry, EnvironmentId } from "@t3tools/contracts";
 import { FileTree } from "./FileTree";
 import { CodeEditor } from "./CodeEditor";
@@ -87,30 +86,39 @@ export function FileExplorer({ environmentId, cwd, theme }: FileExplorerProps) {
   );
 
   return (
-    <Group orientation="horizontal" className="flex-1 min-h-0">
-      <Panel defaultSize={30} minSize={15} maxSize={50} className="overflow-hidden">
-        <FileTree
-          environmentId={environmentId}
-          cwd={cwd}
-          theme={theme}
-          onSelectFile={handleSelectFile}
-          onContextMenu={handleContextMenu}
-        />
-      </Panel>
-      <Separator className="w-px bg-border hover:bg-accent transition-colors data-[resize-handle-active]:bg-accent" />
-      <Panel minSize={30} className="overflow-hidden">
-        <CodeEditor
-          environmentId={environmentId}
-          cwd={cwd}
-          activeFilePath={activeFilePath}
-          onOpenFile={handleSelectFile}
-        />
-      </Panel>
+    <>
+      <div className="flex h-full w-full flex-1 overflow-hidden">
+        <div
+          className={
+            activeFilePath
+              ? "w-2/5 min-w-[200px] max-w-[320px] shrink-0 overflow-hidden border-r border-border"
+              : "w-full overflow-hidden"
+          }
+        >
+          <FileTree
+            environmentId={environmentId}
+            cwd={cwd}
+            theme={theme}
+            onSelectFile={handleSelectFile}
+            onContextMenu={handleContextMenu}
+          />
+        </div>
+        {activeFilePath && (
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <CodeEditor
+              environmentId={environmentId}
+              cwd={cwd}
+              activeFilePath={activeFilePath}
+              onOpenFile={handleSelectFile}
+            />
+          </div>
+        )}
+      </div>
       <FileTreeContextMenu
         state={contextMenu}
         onClose={() => setContextMenu(null)}
         onAction={handleContextAction}
       />
-    </Group>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import {
   type EnvironmentId,
   OrchestrationGetFullThreadDiffInput,
   OrchestrationGetTurnDiffInput,
+  OrchestrationGetWorkingTreeDiffInput,
   ThreadId,
 } from "@t3tools/contracts";
 import { queryOptions } from "@tanstack/react-query";
@@ -29,6 +30,8 @@ export const providerQueryKeys = {
       input.toTurnCount,
       input.cacheScope ?? null,
     ] as const,
+  workingTreeDiff: (input: WorkingTreeDiffQueryInput) =>
+    ["providers", "workingTreeDiff", input.environmentId ?? null, input.threadId] as const,
 };
 
 function decodeCheckpointDiffRequest(input: CheckpointDiffQueryInput) {
@@ -127,5 +130,41 @@ export function checkpointDiffQueryOptions(input: CheckpointDiffQueryInput) {
       isCheckpointTemporarilyUnavailable(error)
         ? Math.min(5_000, 250 * 2 ** (attempt - 1))
         : Math.min(1_000, 100 * 2 ** (attempt - 1)),
+  });
+}
+
+interface WorkingTreeDiffQueryInput {
+  environmentId: EnvironmentId | null;
+  threadId: ThreadId | null;
+  enabled?: boolean;
+}
+
+export function workingTreeDiffQueryOptions(input: WorkingTreeDiffQueryInput) {
+  const decodedRequest = Schema.decodeUnknownOption(OrchestrationGetWorkingTreeDiffInput)({
+    threadId: input.threadId,
+  });
+
+  return queryOptions({
+    queryKey: providerQueryKeys.workingTreeDiff(input),
+    queryFn: async () => {
+      if (!input.environmentId || decodedRequest._tag === "None") {
+        throw new Error("Working tree diff is unavailable.");
+      }
+      const api = ensureEnvironmentApi(input.environmentId);
+      try {
+        return await api.orchestration.getWorkingTreeDiff(decodedRequest.value);
+      } catch (error) {
+        throw new Error(normalizeCheckpointErrorMessage(error), { cause: error });
+      }
+    },
+    enabled: (input.enabled ?? true) && !!input.environmentId && decodedRequest._tag === "Some",
+    staleTime: 5_000,
+    retry: (failureCount, error) => {
+      if (isCheckpointTemporarilyUnavailable(error)) {
+        return failureCount < 6;
+      }
+      return failureCount < 2;
+    },
+    retryDelay: (attempt) => Math.min(2_000, 200 * 2 ** (attempt - 1)),
   });
 }

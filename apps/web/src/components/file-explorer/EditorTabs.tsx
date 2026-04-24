@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from "react";
 import { XIcon } from "lucide-react";
 import type { EditorTab } from "./useEditorTabs";
 import { basenameOfPath } from "../../vscode-icons";
@@ -10,19 +11,49 @@ interface EditorTabsProps {
 }
 
 export function EditorTabs({ tabs, activeIndex, onSelect, onClose }: EditorTabsProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const activeTabRef = useRef<HTMLButtonElement>(null);
+
+  // Scroll active tab into view when it changes
+  useEffect(() => {
+    activeTabRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [activeIndex]);
+
+  // Horizontal scroll with mouse wheel (shift not required)
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    // Scroll horizontally whether the wheel is vertical or horizontal
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    container.scrollLeft += delta;
+    e.preventDefault();
+  }, []);
+
   if (tabs.length === 0) return null;
 
   return (
-    <div className="flex h-8 shrink-0 items-center overflow-x-auto border-b border-border bg-card">
+    <div
+      ref={scrollRef}
+      onWheel={handleWheel}
+      className="editor-tabs-scroll flex h-8 shrink-0 items-center overflow-x-auto border-b border-white/5"
+    >
       {tabs.map((tab, index) => (
         <button
           key={tab.relativePath}
+          ref={index === activeIndex ? activeTabRef : undefined}
           type="button"
           onClick={() => onSelect(index)}
-          className={`group flex items-center gap-1.5 px-3 h-full text-xs border-r border-border shrink-0 ${
+          onAuxClick={(e) => {
+            // Middle-click (button 1) closes the tab
+            if (e.button === 1) {
+              e.preventDefault();
+              onClose(index);
+            }
+          }}
+          className={`group flex items-center gap-1.5 px-3 h-full text-xs border-r border-white/5 shrink-0 ${
             index === activeIndex
-              ? "bg-background text-foreground"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+              ? "bg-white/5 text-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-white/[0.03]"
           }`}
         >
           <span className="truncate max-w-[120px]">
@@ -42,7 +73,7 @@ export function EditorTabs({ tabs, activeIndex, onSelect, onClose }: EditorTabsP
                 onClose(index);
               }
             }}
-            className="size-4 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 hover:bg-accent"
+            className="size-4 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 hover:bg-white/10"
           >
             <XIcon className="size-3" />
           </span>

@@ -191,10 +191,16 @@ function ChatThreadRouteView() {
           onClose={closePanel}
           onOpen={openDiff}
         >
-          <div style={{ display: panelTab === "diff" ? "contents" : "none" }}>
+          <div
+            className="flex min-h-0 w-full flex-1 flex-col"
+            style={{ display: panelTab === "diff" ? "flex" : "none" }}
+          >
             {shouldRenderDiffContent ? <LazyDiffPanel mode="sidebar" /> : null}
           </div>
-          <div style={{ display: panelTab === "files" ? "contents" : "none" }}>
+          <div
+            className="flex min-h-0 w-full flex-1 flex-col"
+            style={{ display: panelTab === "files" ? "flex" : "none" }}
+          >
             {activeCwd ? (
               <Suspense
                 fallback={
@@ -242,10 +248,16 @@ function ChatThreadRouteView() {
             });
           }}
         />
-        <div style={{ display: panelTab === "diff" ? "contents" : "none" }}>
+        <div
+          className="flex min-h-0 w-full flex-1 flex-col"
+          style={{ display: panelTab === "diff" ? "flex" : "none" }}
+        >
           {shouldRenderDiffContent ? <LazyDiffPanel mode="sheet" /> : null}
         </div>
-        <div style={{ display: panelTab === "files" ? "contents" : "none" }}>
+        <div
+          className="flex min-h-0 w-full flex-1 flex-col"
+          style={{ display: panelTab === "files" ? "flex" : "none" }}
+        >
           {activeCwd ? (
             <Suspense
               fallback={

@@ -1474,6 +1474,10 @@ export default function ChatView(props: ChatViewProps) {
     () => shortcutLabelForCommand(keybindings, "diff.toggle", nonTerminalShortcutLabelOptions),
     [keybindings, nonTerminalShortcutLabelOptions],
   );
+  const filesPanelShortcutLabel = useMemo(
+    () => shortcutLabelForCommand(keybindings, "files.toggle", nonTerminalShortcutLabelOptions),
+    [keybindings, nonTerminalShortcutLabelOptions],
+  );
   const onToggleDiff = useCallback(() => {
     if (!isServerThread) {
       return;
@@ -1494,6 +1498,24 @@ export default function ChatView(props: ChatViewProps) {
       },
     });
   }, [diffOpen, environmentId, isServerThread, navigate, onDiffPanelOpen, threadId]);
+  const filesOpen = rawSearch.panel === "files";
+  const onToggleFiles = useCallback(() => {
+    if (!isServerThread) {
+      return;
+    }
+    void navigate({
+      to: "/$environmentId/$threadId",
+      params: {
+        environmentId,
+        threadId,
+      },
+      replace: true,
+      search: (previous) => {
+        const rest = stripPanelSearchParams(previous);
+        return filesOpen ? { ...rest, panel: undefined } : { ...rest, panel: "files" as const };
+      },
+    });
+  }, [filesOpen, environmentId, isServerThread, navigate, threadId]);
 
   const envLocked = Boolean(
     activeThread &&
@@ -2285,6 +2307,13 @@ export default function ChatView(props: ChatViewProps) {
         return;
       }
 
+      if (command === "files.toggle") {
+        event.preventDefault();
+        event.stopPropagation();
+        onToggleFiles();
+        return;
+      }
+
       if (command === "modelPicker.toggle") {
         event.preventDefault();
         event.stopPropagation();
@@ -2314,6 +2343,7 @@ export default function ChatView(props: ChatViewProps) {
     splitTerminal,
     keybindings,
     onToggleDiff,
+    onToggleFiles,
     toggleTerminalVisibility,
   ]);
 
@@ -3253,14 +3283,17 @@ export default function ChatView(props: ChatViewProps) {
           terminalOpen={terminalState.terminalOpen}
           terminalToggleShortcutLabel={terminalToggleShortcutLabel}
           diffToggleShortcutLabel={diffPanelShortcutLabel}
+          filesToggleShortcutLabel={filesPanelShortcutLabel}
           gitCwd={gitCwd}
           diffOpen={diffOpen}
+          filesOpen={filesOpen}
           onRunProjectScript={runProjectScript}
           onAddProjectScript={saveProjectScript}
           onUpdateProjectScript={updateProjectScript}
           onDeleteProjectScript={deleteProjectScript}
           onToggleTerminal={toggleTerminalVisibility}
           onToggleDiff={onToggleDiff}
+          onToggleFiles={onToggleFiles}
         />
       </header>
 

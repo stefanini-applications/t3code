@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { EnvironmentId } from "@t3tools/contracts";
-import { StateEffect, type Extension } from "@codemirror/state";
+import { Compartment, StateEffect, type Extension } from "@codemirror/state";
 import { readEnvironmentApi } from "../../environmentApi";
 import { useComposerHandleContext } from "../../composerHandleContext";
 import { useEditorTabs } from "./useEditorTabs";
@@ -19,6 +19,8 @@ interface CodeEditorProps {
 export function CodeEditor({ environmentId, cwd, activeFilePath }: CodeEditorProps) {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const editorViewRef = useRef<import("@codemirror/view").EditorView | null>(null);
+  const wordWrapCompartmentRef = useRef(new Compartment());
+  const [wordWrap, setWordWrap] = useState(true);
   const [cmModules, setCmModules] = useState<{
     EditorView: typeof import("@codemirror/view").EditorView;
     EditorState: typeof import("@codemirror/state").EditorState;
@@ -55,14 +57,18 @@ export function CodeEditor({ environmentId, cwd, activeFilePath }: CodeEditorPro
     };
   }, []);
 
+  // Track tabs in a ref so the file-load effect doesn't depend on the tabs array
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
+
   // Load file content when activeFilePath changes
   useEffect(() => {
     if (!activeFilePath) return;
 
-    const existingTab = tabs.find((t) => t.relativePath === activeFilePath);
-    if (existingTab) {
-      const idx = tabs.indexOf(existingTab);
-      setActiveIndex(idx);
+    const currentTabs = tabsRef.current;
+    const existingIndex = currentTabs.findIndex((t) => t.relativePath === activeFilePath);
+    if (existingIndex >= 0) {
+      setActiveIndex(existingIndex);
       return;
     }
 
@@ -80,7 +86,7 @@ export function CodeEditor({ environmentId, cwd, activeFilePath }: CodeEditorPro
     return () => {
       cancelled = true;
     };
-  }, [activeFilePath, environmentId, cwd, openTab, setActiveIndex, tabs]);
+  }, [activeFilePath, environmentId, cwd, openTab, setActiveIndex]);
 
   // Create/update EditorView when active tab changes
   useEffect(() => {
@@ -89,23 +95,7 @@ export function CodeEditor({ environmentId, cwd, activeFilePath }: CodeEditorPro
     const { EditorView, EditorState, basicSetup, oneDark, keymap } = cmModules;
     const container = editorContainerRef.current;
     const currentTabPath = activeTab.relativePath;
-    const currentTabContent = activeTab.currentContent;
-
-    // Save handler
-    const saveFile = async () => {
-      const api = readEnvironmentApi(environmentId);
-      if (!api) return;
-      try {
-        await api.projects.writeFile({
-          cwd,
-          relativePath: currentTabPath,
-          contents: currentTabContent,
-        });
-        markSaved(currentTabPath, currentTabContent);
-      } catch {
-        // TODO: toast error
-      }
-    };
+    const compartment = wordWrapCompartmentRef.current;
 
     // Destroy previous view
     if (editorViewRef.current) {
@@ -116,6 +106,7 @@ export function CodeEditor({ environmentId, cwd, activeFilePath }: CodeEditorPro
     const extensions: Extension[] = [
       basicSetup,
       oneDark,
+      compartment.of(wordWrap ? EditorView.lineWrapping : []),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           markDirty(currentTabPath, update.state.doc.toString());
@@ -124,8 +115,18 @@ export function CodeEditor({ environmentId, cwd, activeFilePath }: CodeEditorPro
       keymap.of([
         {
           key: "Mod-s",
-          run: () => {
-            void saveFile();
+          run: (view) => {
+            // Read content directly from the view to avoid stale closures
+            const content = view.state.doc.toString();
+            const api = readEnvironmentApi(environmentId);
+            if (api) {
+              void api.projects
+                .writeFile({ cwd, relativePath: currentTabPath, contents: content })
+                .then(() => markSaved(currentTabPath, content))
+                .catch(() => {
+                  // TODO: toast error
+                });
+            }
             return true;
           },
         },
@@ -209,23 +210,39 @@ export function CodeEditor({ environmentId, cwd, activeFilePath }: CodeEditorPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cmModules, activeTab?.relativePath, activeTab?.originalContent]);
 
+  // Toggle word wrap dynamically without recreating the editor
+  useEffect(() => {
+    const view = editorViewRef.current;
+    if (!view || !cmModules) return;
+    const compartment = wordWrapCompartmentRef.current;
+    view.dispatch({
+      effects: compartment.reconfigure(wordWrap ? cmModules.EditorView.lineWrapping : []),
+    });
+  }, [wordWrap, cmModules]);
+
   if (!activeTab) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center text-sm text-muted-foreground">
+      <div className="flex flex-1 flex-col items-center justify-center bg-white/[0.02] text-sm text-muted-foreground">
         Select a file to view
       </div>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex flex-1 flex-col overflow-hidden bg-white/[0.02]">
       <EditorTabs
         tabs={tabs}
         activeIndex={activeIndex}
         onSelect={setActiveIndex}
         onClose={closeTab}
       />
-      {activeTab && <EditorBreadcrumb relativePath={activeTab.relativePath} />}
+      {activeTab && (
+        <EditorBreadcrumb
+          relativePath={activeTab.relativePath}
+          wordWrap={wordWrap}
+          onToggleWordWrap={() => setWordWrap((prev) => !prev)}
+        />
+      )}
       <div ref={editorContainerRef} className="flex-1 min-h-0 overflow-hidden" />
     </div>
   );

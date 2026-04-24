@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { ChevronRightIcon } from "lucide-react";
 import type { DirectoryEntry, GitFileStatus } from "@t3tools/contracts";
 import { getVscodeIconUrlForEntry } from "../../vscode-icons";
@@ -23,7 +24,7 @@ interface FileTreeNodeProps {
   onContextMenu: (event: React.MouseEvent, entry: DirectoryEntry) => void;
 }
 
-export function FileTreeNode({
+export const FileTreeNode = memo(function FileTreeNode({
   entry,
   depth,
   isExpanded,
@@ -71,4 +72,4 @@ export function FileTreeNode({
       )}
     </button>
   );
-}
+});
